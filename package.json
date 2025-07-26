@@ -1,0 +1,22 @@
+{
+  "name": "mini-auto-deploy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "bin": {
+    "deploy": "bin/deploy.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.5",
+    "minimist": "^1.2.8",
+    "ssh2": "^1.11.0",
+    "mustache": "^4.2.0",
+    "dotenv": "^16.3.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
