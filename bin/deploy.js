@@ -17,6 +17,7 @@ if (argv.help) {
               ${chalk.bold('选项:')}
                 --config     指定配置文件路径
                 --version    显示版本号
+                --init       生成默认配置文件 deploy.config.js
                 --help       显示帮助信息\n
               ${chalk.bold('配置文件字段说明:')}
 
@@ -49,6 +50,20 @@ if (argv.help) {
 
 if (argv.version) {
   console.log(chalk.cyan(`auto-mini-deploy 版本: v${version}`))
+  process.exit(0)
+}
+// 生成配置文件
+if (argv.init) {
+  const templatePath = path.resolve(__dirname, '../templates/deploy.config.js')
+  const targetPath = path.resolve(process.cwd(), 'deploy.config.js')
+
+  if (fs.existsSync(targetPath)) {
+    console.log(chalk.yellow(`⚠️ 当前目录已存在 deploy.config.js，未进行覆盖。`))
+  } else {
+    fs.copyFileSync(templatePath, targetPath)
+    console.log(chalk.green(`✅ 已成功生成配置文件到: ${targetPath}`))
+  }
+
   process.exit(0)
 }
 // 用于自动加载 .env 文件中的环境变量到 process.env 中

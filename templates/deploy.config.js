@@ -29,7 +29,7 @@ module.exports = {
     // 代理配置 web项目会用到 Nginx 转发
     proxy: {
         location: '/api',
-        proxy_pass: 'http://129.211.164.125:4000'
+        proxy_pass: 'http://140.143.168.25:4000'
     },
 
     // 服务器 SSH 配置（建议使用 .env 管理敏感信息）
