@@ -88,7 +88,7 @@ inquirer
   .then(answers => {
     config.ssh.username = answers.username
     config.ssh.password = answers.password
-    console.log('完整的配置', config)
+    console.log('✅完整配置项', config)
     const deployer = new Deployer(config)
     deployer.deploy()
   })

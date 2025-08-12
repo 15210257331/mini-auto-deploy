@@ -45,12 +45,14 @@ http {
             index  index.html index.htm;
             try_files $uri $uri/ /index.html;
         }
-
-        location /api {
-           proxy_pass http://129.211.164.125:4000;
+        # 三个大括号 遇到/ 不会进行转义
+        {{#proxy}}
+        location {{{proxy.target}}} {
+           proxy_pass {{{proxy.proxy_pass}}};
         }
+        {{/proxy}}
 
-        #error_page  404              /404.html;
+        #error_page  404  /404.html;
 
         # redirect server error pages to the static page /50x.html
         #

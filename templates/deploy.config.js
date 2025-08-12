@@ -20,17 +20,17 @@ module.exports = {
     // 服务器上部署的根目录
     remoteDirectory: '/root/web',
 
-    // 启用内置模板（会自动生成 Dockerfile 和 nginx.conf）
+    // 启用内置模板（会自动生成 Dockerfile 和 nginx.conf）node类型的项目应该置为false
     useBuiltInTemplates: true,
-
-    // 是否生成构建日志
-    generateLog: true,
 
     // 代理配置 web项目会用到 Nginx 转发
     proxy: {
-        location: '/api',
+        target: '/api',
         proxy_pass: 'http://140.143.168.25:4000'
     },
+
+    // 是否生成构建日志
+    generateLog: true,
 
     // 服务器 SSH 配置（建议使用 .env 管理敏感信息）
     ssh: {
