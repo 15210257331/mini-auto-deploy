@@ -8,6 +8,7 @@ const argv = require('minimist')(process.argv.slice(2))
 const dotenv = require('dotenv')
 const { version } = require('../package.json')
 
+// 显示使用说明
 if (argv.help) {
   console.log(`\n${chalk.cyan('🌈 auto-mini-deploy 使用帮助')}\n
               ${chalk.bold('用法:')}
@@ -47,7 +48,7 @@ if (argv.help) {
             `)
   process.exit(0)
 }
-
+// 打印版本号
 if (argv.version) {
   console.log(chalk.cyan(`auto-mini-deploy 版本: v${version}`))
   process.exit(0)
@@ -63,18 +64,26 @@ if (argv.init) {
     fs.copyFileSync(templatePath, targetPath)
     console.log(chalk.green(`✅ 已成功生成配置文件到: ${targetPath}`))
   }
-
   process.exit(0)
 }
 // 用于自动加载 .env 文件中的环境变量到 process.env 中
 dotenv.config()
-const configPath = path.resolve(process.cwd(), argv.config || 'deploy.config.js')
-if (!fs.existsSync(configPath)) {
-  console.log(chalk.red(`配置文件不存在: ${configPath}`))
-  process.exit(1)
-}
 
+/**
+ * 拿到配置文件
+ * 用户传入的优先级最高
+ */
+const candidates = [argv.config, 'deploy.config.js', 'deploy.config.cjs', 'deploy.config.mjs'].filter(Boolean) // 去掉 undefined / null
+const configFile = candidates.find(file => fs.existsSync(path.resolve(process.cwd(), file)))
+if (!configFile) {
+  throw new Error('未找到配置文件，请提供 --config 或确保 deploy.config.js/cjs/mjs 存在');
+}
+const configPath = path.resolve(process.cwd(), configFile);
 const config = require(configPath)
+
+/**
+ * 合并命令行参数
+ */
 config.ssh.host = config.ssh.host || process.env.DEPLOY_SSH_HOST
 config.ssh.port = config.ssh.port || parseInt(process.env.DEPLOY_SSH_PORT || '22')
 config.name = config.name || process.env.DEPLOY_PROJECT_NAME

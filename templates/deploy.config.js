@@ -5,6 +5,9 @@ module.exports = {
     // 项目类型 可选值为 web、node
     type: 'web',
 
+    // 项目描述
+    description: 'xxxxx',
+
     // 部署方式 可选值为 docker pm2 Nginx 等
     deployMode: 'docker',
 
