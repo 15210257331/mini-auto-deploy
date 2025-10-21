@@ -10,12 +10,13 @@ const { version } = require('../package.json')
 
 // 显示使用说明
 if (argv.help) {
-  console.log(`\n${chalk.cyan('🌈 auto-mini-deploy 使用帮助')}\n
-              ${chalk.bold('用法:')}
-                deploy [--config <配置文件路径>] [--version]
+  console.log(`\n${chalk.cyan('🌈 auto-mini-deploy是一个简单的代码部署工具,使用方式如下:')}\n
+              ${chalk.bold('基本用法:')}
+                deploy [--config <配置文件路径>]
               ${chalk.bold('说明:')}
-                默认查找 deploy.config.js,可通过 --config 指定配置文件
-              ${chalk.bold('选项:')}
+                不指定配置文件时默认查找根目录下的 deploy.config.js
+                可通过 --config 指定配置文件
+              ${chalk.bold('所有选项:')}
                 --config     指定配置文件路径
                 --version    显示版本号
                 --init       生成默认配置文件 deploy.config.js
