@@ -3,102 +3,72 @@ const path = require('path')
 const fs = require('fs')
 const inquirer = require('inquirer')
 const chalk = require('chalk')
-const Deployer = require('../lib/index')
 const argv = require('minimist')(process.argv.slice(2))
 const dotenv = require('dotenv')
 const { version } = require('../package.json')
+const getDeployer = require('../lib/index')
+const { showHelp } = require('../lib/helpText')
+const { loadConfig, printConfig } = require('../lib/config/loader')
+const { startConfigUi } = require('../lib/configUi')
 
-// 显示使用说明
-if (argv.help) {
-  console.log(`\n${chalk.cyan('🌈 auto-mini-deploy是一个简单的代码部署工具,使用方式如下:')}\n
-              ${chalk.bold('基本用法:')}
-                deploy [--config <配置文件路径>]
-              ${chalk.bold('说明:')}
-                不指定配置文件时默认查找根目录下的 deploy.config.js
-                可通过 --config 指定配置文件
-              ${chalk.bold('所有选项:')}
-                --config     指定配置文件路径
-                --version    显示版本号
-                --init       生成默认配置文件 deploy.config.js
-                --help       显示帮助信息\n
-              ${chalk.bold('配置文件字段说明:')}
+// ========== 命令处理 ==========
 
-              ${chalk.green('name')}                项目名称
-              ${chalk.green('type')}                项目类型,可选值: web、node
-              ${chalk.green('deployMode')}          部署类型,可选值 docker pm2 Nginx
-              ${chalk.green('port')}                部署端口
-              ${chalk.green('buildCommand')}        构建命令，如 npm run build
-              ${chalk.green('staticDir')}           构建产物所在目录，如 dist
-              ${chalk.green('remoteDirectory')}     服务器部署目录
-              ${chalk.green('useBuiltInTemplates')} 是否使用内置 Dockerfile/nginx.conf 模板（true/false）
-              ${chalk.green('generateLog')}         是否生成日志（true/false）
-              
-              ${chalk.green('proxy.location')}      代理的匹配规则
-              ${chalk.green('proxy.proxy_pass')}    代理目标地址
-             
-              ${chalk.green('ssh.host')}            服务器 IP 地址
-              ${chalk.green('ssh.port')}            SSH 端口，默认 22
-              ${chalk.green('ssh.username')}        SSH 用户名
-              ${chalk.green('ssh.password')}        SSH 密码
-          
-              ${chalk.bold('环境变量支持（可选）:')}
-              ${chalk.green('DEPLOY_SSH_HOST')}        覆盖 ssh.host
-              ${chalk.green('DEPLOY_SSH_PORT')}        覆盖 ssh.port
-              ${chalk.green('DEPLOY_PROJECT_NAME')}    覆盖 name
-              ${chalk.green('DEPLOY_REMOTE_DIR')}      覆盖 remoteDirectory
-            `)
-  process.exit(0)
-}
-// 打印版本号
-if (argv.version) {
-  console.log(chalk.cyan(`auto-mini-deploy 版本: v${version}`))
-  process.exit(0)
-}
-// 生成配置文件
+if (argv.help)   { showHelp(); process.exit(0) }
+if (argv.version) { console.log(chalk.cyan(`auto-mini-deploy 版本: v${version}`)); process.exit(0) }
+
 if (argv.init) {
-  const templatePath = path.resolve(__dirname, '../templates/deploy.config.js')
-  const targetPath = path.resolve(process.cwd(), 'deploy.config.js')
-
-  if (fs.existsSync(targetPath)) {
-    console.log(chalk.yellow(`⚠️ 当前目录已存在 deploy.config.js，未进行覆盖。`))
-  } else {
-    fs.copyFileSync(templatePath, targetPath)
-    console.log(chalk.green(`✅ 已成功生成配置文件到: ${targetPath}`))
-  }
-  process.exit(0)
+    const templatePath = path.resolve(__dirname, '../templates/deploy.config.js')
+    const targetPath = path.resolve(process.cwd(), 'deploy.config.js')
+    if (fs.existsSync(targetPath)) {
+        console.log(chalk.yellow('⚠️ 当前目录已存在 deploy.config.js，未进行覆盖。'))
+    } else {
+        fs.copyFileSync(templatePath, targetPath)
+        console.log(chalk.green(`✅ 已成功生成配置文件到: ${targetPath}`))
+    }
+    process.exit(0)
 }
-// 用于自动加载 .env 文件中的环境变量到 process.env 中
+
+if (argv['init-ui'] || argv.initUi) {
+    startConfigUi(process.cwd())
+        .then(() => {
+            console.log(chalk.green('\n✅ 配置文件已生成，可运行 deploy 开始部署'))
+            process.exit(0)
+        })
+        .catch(err => {
+            console.error(chalk.red('配置 UI 启动失败:'), err.message)
+            process.exit(1)
+        })
+    return // 阻止继续执行部署流程
+}
+
+// ========== 部署流程 ==========
+
 dotenv.config()
 
-/**
- * 拿到配置文件
- * 用户传入的优先级最高
- */
-const candidates = [argv.config, 'deploy.config.js', 'deploy.config.cjs', 'deploy.config.mjs'].filter(Boolean) // 去掉 undefined / null
-const configFile = candidates.find(file => fs.existsSync(path.resolve(process.cwd(), file)))
-if (!configFile) {
-  throw new Error('未找到配置文件，请提供 --config 或确保 deploy.config.js/cjs/mjs 存在');
-}
-const configPath = path.resolve(process.cwd(), configFile);
-const config = require(configPath)
+const { config, dryRun, skipBuild, skipUpload } = loadConfig(argv)
 
-/**
- * 合并命令行参数
- */
-config.ssh.host = config.ssh.host || process.env.DEPLOY_SSH_HOST
-config.ssh.port = config.ssh.port || parseInt(process.env.DEPLOY_SSH_PORT || '22')
-config.name = config.name || process.env.DEPLOY_PROJECT_NAME
-config.remoteDirectory = config.remoteDirectory || process.env.DEPLOY_REMOTE_DIR
+if (dryRun) {
+    console.log(chalk.cyan('🔍 DRY-RUN 模式 — 仅打印执行计划，不实际操作\n'))
+}
+
+process.on('SIGINT', () => {
+    console.log(chalk.yellow('\n\n⚠️ 用户取消部署'))
+    process.exit(130)
+})
 
 inquirer
-  .prompt([
-    { type: 'input', name: 'username', message: '请输入服务器用户名:' },
-    { type: 'password', name: 'password', message: '请输入服务器密码:', mask: '*' }
-  ])
-  .then(answers => {
-    config.ssh.username = answers.username
-    config.ssh.password = answers.password
-    console.log('✅完整配置项', config)
-    const deployer = new Deployer(config)
-    deployer.deploy()
-  })
+    .prompt([
+        { type: 'input',   name: 'username', message: '请输入服务器用户名:', validate: v => v.trim() ? true : '用户名不能为空' },
+        { type: 'password', name: 'password', message: '请输入服务器密码(使用密钥登录请留空):', mask: '*' }
+    ])
+    .then(answers => {
+        if (answers.username) config.ssh.username = answers.username
+        if (answers.password) config.ssh.password = answers.password
+        printConfig(config)
+        return getDeployer(config, { dryRun, skipBuild, skipUpload }).deploy()
+    })
+    .then(() => process.exit(0))
+    .catch(err => {
+        console.error(chalk.red('部署失败:'), err.message || err)
+        process.exit(1)
+    })

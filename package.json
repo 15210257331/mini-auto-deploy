@@ -1,13 +1,13 @@
 {
   "name": "mini-auto-deploy",
   "version": "1.1.2",
-  "description": "",
+  "description": "一键自动部署 CLI 工具 — 构建、打包、上传、部署 Web/Node.js 应用到远程 Linux 服务器",
   "main": "lib/index.js",
   "bin": {
     "deploy": "bin/deploy.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test/run.js",
     "release": "release-it",
     "init": "release-it --init"
   },
@@ -19,7 +19,7 @@
     "mustache": "^4.2.0",
     "ssh2": "^1.11.0"
   },
-  "author": "",
+  "author": "chenxiaofei",
   "license": "ISC",
   "devDependencies": {
     "release-it": "^15.9.0",
