@@ -1,6 +1,6 @@
 {
   "name": "mini-auto-deploy",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "一键自动部署 CLI 工具 — 构建、打包、上传、部署 Web/Node.js 应用到远程 Linux 服务器",
   "main": "lib/index.js",
   "bin": {
